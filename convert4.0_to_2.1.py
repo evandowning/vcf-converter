@@ -53,6 +53,25 @@ def _main():
                     pn = line[len(key):]
                     c.phone.append(pn)
 
+                key_pattern1 = 'TEL;PREF=\d+;TYPE='
+                key_pattern2 = 'TEL;PREF=\d+:'
+                key = 'TEL;PREF='
+                if line[:len(key)] == key:
+                    f = re.findall(key_pattern1,line)
+                    if f:
+                        pn = line[len(f[0]):]
+                        c.phone.append(pn)
+                    else:
+                        f = re.findall(key_pattern2,line)
+                        if f:
+                            pn = line[len(f[0]):]
+                            c.phone.append('OTHER' + f[0][-1] + pn)
+
+                key = 'TEL:'
+                if line[:len(key)] == key:
+                    pn = line[len(key):]
+                    c.phone.append('OTHER:' + pn)
+
                 key = 'EMAIL'
                 if key in line:
                     pos = line.rfind(':')
@@ -81,7 +100,8 @@ def _main():
             for i,e in enumerate(c.email):
                 fw.write('EMAIL;{0}:{1}\n'.format(i,e))
 
-            fw.write('ADR;HOME:;;{0}\n'.format(c.addr))
+            if len(c.addr) > 0:
+                fw.write('ADR;HOME:;;{0}\n'.format(c.addr))
 
             fw.write('END:VCARD\n')
 
