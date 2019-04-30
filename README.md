@@ -6,5 +6,5 @@ Python 3
 
 ## Usage
 ```
-$ python convert4.0_to_2.1 input.vcf output.vcf
+$ python3 convert4.0_to_2.1 input.vcf output.vcf
 ```
