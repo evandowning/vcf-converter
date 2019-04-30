@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import re
 
@@ -9,7 +11,7 @@ class Contact:
         self.addr = ''
 
 def usage():
-    print 'usage: python convert.py input.vcf output.vcf'
+    sys.stdout.write('usage: python convert.py input.vcf output.vcf\n')
     sys.exit(2)
 
 def _main():
@@ -85,7 +87,7 @@ def _main():
                     addr = line[pos:]
                     c.addr = addr
 
-    print '{0} Contacts read'.format(len(contacts))
+    sys.stdout.write('{0} Contacts read\n'.format(len(contacts)))
 
     # Write to VCF 2.1 file
     with open(outFN,'w') as fw:
