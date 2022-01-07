@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-import re
 
 class Contact:
     def __init__(self):
@@ -46,33 +45,16 @@ def _main():
 
             # Read content into contact
             if read == 1:
-                key = 'FN:'
+                key = 'FN;'
                 if line[:len(key)] == key:
                     c.name = line[len(key):]
+                    c.name = c.name.split(':',1)[1]
 
-                key = 'TEL;TYPE='
+                key = 'TEL;'
                 if line[:len(key)] == key:
                     pn = line[len(key):]
+                    pn = pn.split(':',1)[1]
                     c.phone.append(pn)
-
-                key_pattern1 = 'TEL;PREF=\d+;TYPE='
-                key_pattern2 = 'TEL;PREF=\d+:'
-                key = 'TEL;PREF='
-                if line[:len(key)] == key:
-                    f = re.findall(key_pattern1,line)
-                    if f:
-                        pn = line[len(f[0]):]
-                        c.phone.append(pn)
-                    else:
-                        f = re.findall(key_pattern2,line)
-                        if f:
-                            pn = line[len(f[0]):]
-                            c.phone.append('OTHER' + f[0][-1] + pn)
-
-                key = 'TEL:'
-                if line[:len(key)] == key:
-                    pn = line[len(key):]
-                    c.phone.append('OTHER:' + pn)
 
                 key = 'EMAIL'
                 if key in line:
@@ -80,12 +62,10 @@ def _main():
                     e = line[pos+1:]
                     c.email.append(e)
 
-                key = 'ADR'
+                key = 'ADR;'
                 if line[:len(key)] == key:
-                    f = re.findall(r'\d+',line)
-                    pos = line.find(f[0])
-                    addr = line[pos:]
-                    c.addr = addr
+                    _,street,city,state,zipcode = line.rsplit(';', 4)
+                    c.addr = '{0}, {1}, {2} {3}'.format(street,city,state,zipcode)
 
     sys.stdout.write('{0} Contacts read\n'.format(len(contacts)))
 
@@ -94,16 +74,26 @@ def _main():
         for c in contacts:
             fw.write('BEGIN:VCARD\n')
             fw.write('VERSION:2.1\n')
-            fw.write('FN:{0}\n'.format(c.name))
 
-            for pn in c.phone:
-                fw.write('TEL;{0}\n'.format(pn))
+            if len(c.name.split(' ')) > 1:
+                firstname = c.name.split(' ',1)[0]
+                lastname = c.name.split(' ',1)[1]
+
+                fw.write('N:{0};{1};;;\n'.format(lastname, firstname))
+                fw.write('FN:{0} {1}\n'.format(firstname, lastname))
+            else:
+                fw.write('N:{0};;;;\n'.format(c.name))
+                fw.write('FN:{0}\n'.format(c.name))
+
+            for i,pn in enumerate(c.phone):
+                fw.write('TEL;X-{0}:{1}\n'.format(i,pn))
 
             for i,e in enumerate(c.email):
-                fw.write('EMAIL;{0}:{1}\n'.format(i,e))
+                fw.write('EMAIL;X-{0}:{1}\n'.format(i,e))
 
             if len(c.addr) > 0:
-                fw.write('ADR;HOME:;;{0}\n'.format(c.addr))
+                addr = '='.join([hex(ord(c)).replace('0x','').upper() for c in c.addr])
+                fw.write('ADR;X-0;ENCODING=QUOTED-PRINTABLE:;;{0};;;;\n'.format(addr))
 
             fw.write('END:VCARD\n')
 
